@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Volunteer Registration - Suraksha</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h2>Volunteer Registration</h2>
+    </header>
+    <main>
+        <form method="POST" action="/register" enctype="multipart/form-data">
+            <input type="text" name="name" placeholder="Full Name" required><br>
+            <input type="tel" name="phone" placeholder="Phone Number" required pattern="[0-9]{10}" maxlength="10" title="Enter a 10-digit phone number"><br>
+            <input type="text" name="address" placeholder="Address" required><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <label>KYC Document (PDF/JPG/PNG):</label>
+            <input type="file" name="kyc_doc" accept=".pdf,.jpg,.jpeg,.png" required><br>
+            <button type="submit" class="btn">Register as Volunteer</button>
+        </form>
+        <p>Already registered? <a href="/login">Login</a></p>
+    </main>
+</body>
+</html> 

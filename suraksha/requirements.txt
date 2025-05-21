@@ -1,0 +1,6 @@
+flask==3.0.2
+flask-pymongo==2.3.0
+flask-login
+werkzeug==3.0.1
+python-dotenv
+pymongo==4.6.1 

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Volunteer Dashboard - Suraksha</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .navbar {
+            background: #4a148c;
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar .brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .navbar .nav-btns button {
+            background: #7c43bd;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 0.5rem 1.2rem;
+            margin-left: 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .navbar .nav-btns button:hover {
+            background: #512da8;
+        }
+        .block {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 500px;
+            text-align: left;
+        }
+        .block h3 {
+            color: #4a148c;
+            margin-top: 0;
+        }
+        /* Profile Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background: #fff;
+            margin: 8% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: left;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            color: #4a148c;
+            cursor: pointer;
+        }
+        .contacts-list {
+            margin: 1rem 0 0 0;
+            padding: 0;
+            list-style: none;
+        }
+        .contacts-list li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+    <script>
+    // Geolocation for SOS
+    function sendSOS() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                document.getElementById('lat').value = pos.coords.latitude;
+                document.getElementById('lon').value = pos.coords.longitude;
+                document.getElementById('sosForm').submit();
+            }, function() {
+                alert('Location access denied!');
+            });
+        } else {
+            alert('Geolocation not supported!');
+        }
+    }
+    function showProfile() {
+        document.getElementById('profileModal').style.display = 'block';
+    }
+    function closeProfile() {
+        document.getElementById('profileModal').style.display = 'none';
+    }
+    // Audio/video recording placeholder
+    </script>
+</head>
+<body>
+    <div class="navbar">
+        <span class="brand">Suraksha</span>
+        <div class="nav-btns">
+            <button onclick="showProfile()">Profile</button>
+            <form method="POST" action="/logout" style="display:inline;">
+                <button type="submit">Logout</button>
+            </form>
+        </div>
+    </div>
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeProfile()">&times;</span>
+            <h3>Your Profile</h3>
+            <p><strong>Name:</strong> {{ profile.name }}</p>
+            <p><strong>Phone:</strong> {{ profile.phone }}</p>
+            <p><strong>Address:</strong> {{ profile.address }}</p>
+            <p><strong>KYC Status:</strong> {{ profile.kyc_status }}</p>
+            <a href="/uploads/{{ profile.kyc_doc }}" target="_blank">View KYC Document</a>
+        </div>
+    </div>
+
+    <div class="block">
+        <h3>SOS Alert</h3>
+        <form id="sosForm" method="POST" action="/sos">
+            <input type="hidden" id="lat" name="lat">
+            <input type="hidden" id="lon" name="lon">
+            <button type="button" class="btn" onclick="sendSOS()">Send SOS (with Location)</button>
+        </form>
+        <p>Send an instant SOS alert with your live location to notify authorities and nearby volunteers.</p>
+    </div>
+
+    <div class="block">
+        <h3>Audio/Video Evidence</h3>
+        <div id="recorder-controls">
+            <button class="btn" id="startRec">Start Recording</button>
+            <button class="btn" id="stopRec" disabled>Stop Recording</button>
+            <select id="mediaType">
+                <option value="video">Video</option>
+                <option value="audio">Audio</option>
+            </select>
+        </div>
+        <video id="preview" width="320" height="240" controls style="display:none;"></video>
+        <audio id="audioPreview" controls style="display:none;"></audio>
+        <form id="uploadForm" method="POST" action="/upload_media" enctype="multipart/form-data" style="display:none;">
+            <input type="hidden" name="media_type" id="media_type">
+            <input type="file" name="media_file" id="media_file" style="display:none;">
+            <button type="submit" class="btn">Upload Recording</button>
+        </form>
+        <p>Record and upload audio or video evidence during emergencies for added safety.</p>
+        <div id="media-list">
+            {% if media_files %}
+                <h4>Your Uploaded Media:</h4>
+                <ul>
+                {% for m in media_files %}
+                    <li>
+                        {% if m.media_type == 'video' %}
+                            <video src="/uploads/{{ m.filename }}" width="200" controls></video>
+                        {% else %}
+                            <audio src="/uploads/{{ m.filename }}" controls></audio>
+                        {% endif %}
+                        <span>{{ m.media_type|capitalize }} | {{ m.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <form method="POST" action="/delete_media" style="display:inline;">
+                            <input type="hidden" name="media_id" value="{{ m._id }}">
+                            <input type="hidden" name="filename" value="{{ m.filename }}">
+                            <button type="submit" class="btn" style="background:#e53935;">Delete</button>
+                        </form>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="block">
+        <h3>Emergency Contacts</h3>
+        <form method="POST" action="/add_contact">
+            <input type="text" name="contact_name" placeholder="Contact Name" required>
+            <input type="tel" name="contact_phone" placeholder="Contact Phone" required pattern="[0-9]{10}" maxlength="10">
+            <button type="submit" class="btn">Add Contact</button>
+        </form>
+        <ul class="contacts-list">
+            <li><strong>Police:</strong> 100 <a href="tel:100" class="btn" style="background:#388e3c; padding:0.3rem 1rem; font-size:0.95rem;">Call</a></li>
+            {% if contacts %}
+                {% for c in contacts %}
+                    <li><strong>{{ c.name }}:</strong> {{ c.phone }} <a href="tel:{{ c.phone }}" class="btn" style="background:#388e3c; padding:0.3rem 1rem; font-size:0.95rem;">Call</a></li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+        <p>Add trusted contacts for quick alerts. Police is always included by default.</p>
+    </div>
+
+    <div class="block">
+        <h3>Alert History</h3>
+        <p>Coming soon: View all your past SOS alerts and responses for your records.</p>
+    </div>
+
+    <div class="block">
+        <h3>Community Volunteers</h3>
+        <ul>
+        {% for v in volunteers %}
+            <li>
+                <strong>{{ v.name }}</strong> ({{ v.phone }})
+                <form method="POST" action="/send_alert" style="display:inline;">
+                    <input type="hidden" name="target_id" value="{{ v._id }}">
+                    <button type="submit" class="btn" style="background:#fbc02d;">Alert</button>
+                </form>
+            </li>
+        {% else %}
+            <li>No other volunteers found.</li>
+        {% endfor %}
+        </ul>
+        <p>Alert any volunteer in your area for help.</p>
+    </div>
+
+    <div class="block">
+        <h3>Received Alerts</h3>
+        <ul>
+        {% for a in alerts %}
+            <li>
+                <strong>From:</strong> {{ a.from_name }}
+                <span>({{ a.created_at.strftime('%Y-%m-%d %H:%M') }})</span>
+                <span>Status: {{ a.status|capitalize }}</span>
+                {% if a.status == 'pending' %}
+                    <form method="POST" action="/respond_alert" style="display:inline;">
+                        <input type="hidden" name="alert_id" value="{{ a._id }}">
+                        <button type="submit" class="btn" style="background:#388e3c;">Connect</button>
+                    </form>
+                {% endif %}
+            </li>
+        {% else %}
+            <li>No alerts received.</li>
+        {% endfor %}
+        </ul>
+        <p>When you receive an alert, you can connect and help the sender.</p>
+    </div>
+
+    <script>
+    let mediaRecorder, recordedChunks = [], currentType = 'video';
+    const startBtn = document.getElementById('startRec');
+    const stopBtn = document.getElementById('stopRec');
+    const preview = document.getElementById('preview');
+    const audioPreview = document.getElementById('audioPreview');
+    const uploadForm = document.getElementById('uploadForm');
+    const mediaFileInput = document.getElementById('media_file');
+    const mediaTypeSelect = document.getElementById('mediaType');
+    const mediaTypeInput = document.getElementById('media_type');
+
+    mediaTypeSelect.onchange = function() {
+        currentType = this.value;
+    }
+
+    startBtn.onclick = async function() {
+        recordedChunks = [];
+        let constraints = currentType === 'video' ? { video: true, audio: true } : { audio: true };
+        let stream = await navigator.mediaDevices.getUserMedia(constraints);
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+        mediaRecorder.onstop = function() {
+            let blob = new Blob(recordedChunks, { type: currentType === 'video' ? 'video/webm' : 'audio/webm' });
+            let url = URL.createObjectURL(blob);
+            if (currentType === 'video') {
+                preview.src = url;
+                preview.style.display = '';
+                audioPreview.style.display = 'none';
+            } else {
+                audioPreview.src = url;
+                audioPreview.style.display = '';
+                preview.style.display = 'none';
+            }
+            // Prepare upload
+            let file = new File([blob], currentType + '_recording_' + Date.now() + '.webm', { type: blob.type });
+            let dt = new DataTransfer();
+            dt.items.add(file);
+            mediaFileInput.files = dt.files;
+            mediaTypeInput.value = currentType;
+            uploadForm.style.display = '';
+        };
+        mediaRecorder.start();
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+    };
+    stopBtn.onclick = function() {
+        mediaRecorder.stop();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    };
+    </script>
+</body>
+</html> 

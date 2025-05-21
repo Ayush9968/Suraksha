@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Volunteer Login - Suraksha</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h2>Volunteer Login</h2>
+    </header>
+    <main>
+        <form method="POST" action="/login">
+            <input type="text" name="phone" placeholder="Phone Number" required pattern="[0-9]{10}"><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <p>Not registered? <a href="/register">Register here</a></p>
+    </main>
+</body>
+</html> 
